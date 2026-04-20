@@ -74,12 +74,14 @@ scene.add( light );
 if (objToRender === "plane") {
   controls = new OrbitControls(camera, renderer.domElement);
 
-controls.rotateSpeed = 2;
-controls.zoomSpeed = 10;
-controls.panSpeed = 2;
+  // 🔥 AICI pui viteza
+  controls.rotateSpeed = 2.5;
+  controls.zoomSpeed = 10;
+  controls.panSpeed = 2;
 
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
+  // 🔥 mișcare mai fluidă
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.12;
 }
 
 //Render the scene
