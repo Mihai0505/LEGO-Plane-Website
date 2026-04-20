@@ -73,10 +73,8 @@ scene.add( light );
 //This adds controls to the camera, so we can rotate / zoom it with the mouse
 if (objToRender === "plane") {
   controls = new OrbitControls(camera, renderer.domElement);
-
-  controls.rotateSpeed = 2.5;
+  controls.rotateSpeed = 5;
   controls.zoomSpeed = 5;
-  controls.panSpeed = 2;
 }
 
 //Render the scene
