@@ -2,105 +2,108 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// Scene
+
+//Create a Three.JS Scene
 const scene = new THREE.Scene();
+//create a new camera with positions and angles
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// Camera
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.01,
-  10000
-);
+//Keep track of the mouse position, so we can make the eye move
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
 
-// Renderer
-const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.getElementById("container3D").appendChild(renderer.domElement);
+//Keep the 3D object on a global variable so we can access it later
+let object;
 
-// Controls
-const controls = new OrbitControls(camera, renderer.domElement);
+//OrbitControls allow the camera to move around the scene
+let controls;
 
-// 🔥 CONTROALE PRO
-controls.rotateSpeed = 3;
-controls.zoomSpeed = 12;
-controls.panSpeed = 3;
+//Set which object to render
+let objToRender = 'plane';
 
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-
-// 🔥 ZOOM NELIMITAT
-controls.minDistance = 0.01;
-controls.maxDistance = 10000;
-
-controls.screenSpacePanning = true;
-
-// 🔥 AUTO ROTATE (Sketchfab style)
-controls.autoRotate = true;
-controls.autoRotateSpeed = 1.5;
-
-// 🔥 STOP când userul interacționează
-controls.addEventListener('start', () => {
-  controls.autoRotate = false;
-});
-controls.addEventListener('end', () => {
-  controls.autoRotate = true;
-});
-
-// Loader
+//Instantiate a loader for the .gltf file
 const loader = new GLTFLoader();
 
+//Load the file
 loader.load(
-  `models/plane/scene.gltf`,
+  `models/${objToRender}/scene.gltf`,
   function (gltf) {
-    const object = gltf.scene;
+    //If the file is loaded, add it to the scene
+    object = gltf.scene;
     scene.add(object);
-
-    // 🔥 CENTER MODEL
-    const box = new THREE.Box3().setFromObject(object);
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-
-    object.position.sub(center);
-
-    // 🔥 SCALE MODEL
-    const maxDim = Math.max(size.x, size.y, size.z);
-    const scale = 20 / maxDim;
-    object.scale.setScalar(scale);
-
-    // 🔥 CAMERA + TARGET FIX
-    camera.position.set(0, 0, 30);
-    controls.target.set(0, 0, 0);
-    controls.update();
+  },
+  function (xhr) {
+    //While it is loading, log the progress
+    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+  },
+  function (error) {
+    //If there is an error, log it
+    console.error(error);
   }
 );
 
-// Lights
-const light1 = new THREE.DirectionalLight(0xffffff, 2);
-light1.position.set(5, 10, 5);
-scene.add(light1);
+//Instantiate a new renderer and set its size
+const renderer = new THREE.WebGLRenderer({ alpha: true }); //Alpha: true allows for the transparent background
+renderer.setSize(window.innerWidth, window.innerHeight);
 
-const light2 = new THREE.DirectionalLight(0xffffff, 1.5);
-light2.position.set(-5, 5, -5);
-scene.add(light2);
+//Add the renderer to the DOM
+document.getElementById("container3D").appendChild(renderer.domElement);
 
-const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-scene.add(ambient);
+//Set how far the camera will be from the 3D model
+camera.position.z = objToRender === "plane" ? 25 : 500;
 
-// Resize
-window.addEventListener("resize", () => {
+//Add lights to the scene, so we can actually see the 3D model
+const topLight = new THREE.DirectionalLight(0xffffff, 2); // (color, intensity)
+topLight.position.set(1000, 1000, 0) //top-left-ish
+topLight.castShadow = true;
+scene.add(topLight);
+
+const topLight1 = new THREE.DirectionalLight(0xffffff, 2); // (color, intensity)
+topLight1.position.set(0, 1000, 1000) //top-left-ish
+topLight1.castShadow = true;
+scene.add(topLight1);
+
+
+const ambientLight = new THREE.AmbientLight(0x333333, objToRender === "plane" ? 5 : 1);
+scene.add(ambientLight);
+
+const light = new THREE.AmbientLight( 0x404040 ); // soft white light
+scene.add( light );
+
+//This adds controls to the camera, so we can rotate / zoom it with the mouse
+if (objToRender === "plane") {
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+}
+
+//Render the scene
+function animate() {
+  requestAnimationFrame(animate);
+  //Here we could add some code to update the scene, adding some automatic movement
+
+  //Make the eye move
+  if (object && objToRender === "eye") {
+    //I've played with the constants here until it looked good 
+    object.rotation.y = -3 + mouseX / window.innerWidth * 3;
+    object.rotation.x = -1.2 + mouseY * 2.5 / window.innerHeight;
+  }
+  renderer.render(scene, camera);
+}
+
+//Add a listener to the window, so we can resize the window and the camera
+window.addEventListener("resize", function () {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Animate
-function animate() {
-  requestAnimationFrame(animate);
-
-  controls.update(); // 🔥 IMPORTANT pentru smooth + auto rotate
-
-  renderer.render(scene, camera);
+//add mouse position listener, so we can make the eye move
+document.onmousemove = (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
 }
 
+//Start the 3D rendering
 animate();
+
