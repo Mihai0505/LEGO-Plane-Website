@@ -9,8 +9,8 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
-  0.1,
-  1000
+  0.01,
+  10000
 );
 
 // Renderer
@@ -23,21 +23,23 @@ const controls = new OrbitControls(camera, renderer.domElement);
 
 // 🔥 CONTROALE PRO
 controls.rotateSpeed = 3;
-controls.zoomSpeed = 6;
-controls.panSpeed = 2;
+controls.zoomSpeed = 12;
+controls.panSpeed = 3;
 
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 
-// 🔥 ZOOM FIX
-controls.minDistance = 1;
-controls.maxDistance = 500;
+// 🔥 ZOOM NELIMITAT
+controls.minDistance = 0.01;
+controls.maxDistance = 10000;
+
+controls.screenSpacePanning = true;
 
 // 🔥 AUTO ROTATE (Sketchfab style)
 controls.autoRotate = true;
 controls.autoRotateSpeed = 1.5;
 
-// 🔥 OPREȘTE ROTIREA CÂND USERUL INTERACȚIONEAZĂ
+// 🔥 STOP când userul interacționează
 controls.addEventListener('start', () => {
   controls.autoRotate = false;
 });
@@ -54,25 +56,26 @@ loader.load(
     const object = gltf.scene;
     scene.add(object);
 
-    // 🔥 CENTER + SCALE (FOARTE IMPORTANT)
+    // 🔥 CENTER MODEL
     const box = new THREE.Box3().setFromObject(object);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
 
     object.position.sub(center);
 
+    // 🔥 SCALE MODEL
     const maxDim = Math.max(size.x, size.y, size.z);
     const scale = 20 / maxDim;
     object.scale.setScalar(scale);
 
-    // 🔥 camera poziționată corect
+    // 🔥 CAMERA + TARGET FIX
     camera.position.set(0, 0, 30);
     controls.target.set(0, 0, 0);
     controls.update();
   }
 );
 
-// Lights (clean și eficient)
+// Lights
 const light1 = new THREE.DirectionalLight(0xffffff, 2);
 light1.position.set(5, 10, 5);
 scene.add(light1);
@@ -95,7 +98,7 @@ window.addEventListener("resize", () => {
 function animate() {
   requestAnimationFrame(animate);
 
-  controls.update(); // 🔥 necesar pentru smooth + autorotate
+  controls.update(); // 🔥 IMPORTANT pentru smooth + auto rotate
 
   renderer.render(scene, camera);
 }
